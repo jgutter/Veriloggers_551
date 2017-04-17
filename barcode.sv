@@ -7,6 +7,7 @@ output logic [7:0] ID;
 typedef enum reg [3:0] {IDLE, GET_TIME, SAMPLE, WAIT} state_t;
 state_t state, next_state;
 logic set_ID_vld, get_half_period, shift, done, sampling, load, full_time;
+logic BC_1, BC_sync;
 logic [21:0] bit_half_period, sample_timer; //22 bit counter to hold period of BC signal & sample timer
 logic [22:0] bit_period;
 logic [7:0] shift_reg;
@@ -22,6 +23,17 @@ always @(posedge clk, negedge rst_n) begin //ID_vld flop
 			ID_vld <= 1'b0;
 		else if (set_ID_vld)
 			ID_vld <= 1'b1;
+	end
+end
+
+always @ (posedge clk, negedge rst_n) begin
+	if (!rst_n) begin
+		BC_1 <= 1'b0;
+		BC_sync <= 1'b0;
+	end
+	else begin
+		BC_1 <= BC;
+		BC_sync <= BC_1;
 	end
 end
 
@@ -51,7 +63,7 @@ always @(posedge clk, negedge rst_n) begin
 		shift_reg <= 8'h00;
 	else begin
 		if (shift)
-			shift_reg <= {shift_reg[6:0], BC}; //Sample BC into LSB on shift signal
+			shift_reg <= {shift_reg[6:0], BC_sync}; //Sample BC into LSB on shift signal
 	end
 end
 
