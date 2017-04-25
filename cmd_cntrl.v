@@ -83,8 +83,7 @@ end
 assign go = in_transit && OK2Move;
 assign en = ~OK2Move && in_transit;
 assign buzz = en;
-assign buzz_n = ~buzz;
-
+assign buzz_n = (en)? ~buzz : buzz; 
 
 always @ (*) begin
 
