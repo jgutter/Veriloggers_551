@@ -1,0 +1,4 @@
+Info (10281): Verilog HDL Declaration information at follower.v(6): object "RST_n" differs only in case from object "rst_n" in the same scope File: I:/ece551/exercise_12/follower.v Line: 6
+Warning (10268): Verilog HDL information at motion_cntrl.sv(158): always construct contains both blocking and non-blocking assignments File: I:/ece551/exercise_12/motion_cntrl.sv Line: 158
+Info (10281): Verilog HDL Declaration information at motion_cntrl.sv(5): object "A2D_res" differs only in case from object "a2d_res" in the same scope File: I:/ece551/exercise_12/motion_cntrl.sv Line: 5
+Info (10281): Verilog HDL Declaration information at motion_cntrl.sv(30): object "PI_CALC" differs only in case from object "PI_calc" in the same scope File: I:/ece551/exercise_12/motion_cntrl.sv Line: 30
