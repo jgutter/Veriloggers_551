@@ -3,11 +3,15 @@ module cmd_cntrl_tb();
 //Registers
 reg cmd_rdy, OK2Move, ID_vld, clk, rst_n;
 reg [7:0] cmd, ID;
+reg [9:0] duty;
 wire clr_cmd_rdy, in_transit, go, buzz, buzz_n, clr_ID_vld; 
 
-//Instantiate the DUT
+//Instantiate cmd_cntrl
 cmd_cntrl iDUT(.cmd(cmd), .cmd_rdy(cmd_rdy), .OK2Move(OK2Move), .ID(ID), .ID_vld(ID_vld), .clk(clk), .rst_n(rst_n), 
 	.clr_cmd_rdy(clr_cmd_rdy), .clr_ID_vld(clr_ID_vld), .in_transit(in_transit), .go(go), .buzz(buzz), .buzz_n(buzz_n));
+
+//Instantiate pwd
+pwm myPWM(.duty(duty), .clk(clk), .rst_n(rst_n), .PWM_sig(buzz));
 
 //Instantiate the global clock
 always begin
@@ -16,7 +20,7 @@ end
 
 //Control the inputs
 initial begin
-
+  duty = 10'h1ff; // 50% duty cycle
   cmd_rdy = 0; 
   OK2Move = 0; 
   ID_vld = 0;
@@ -24,6 +28,8 @@ initial begin
   rst_n = 0;
   cmd = 8'b11010111; // expected to remain in the STOP state 
   ID = 8'b00101101; 
+
+  // tests the state transitions in the SM as well as the expected output values
 
   @(negedge clk) rst_n = 1; // asynchronous reset, values expected to be zero
 
@@ -72,6 +78,16 @@ initial begin
   repeat (3) begin
   @(posedge clk); 
   end
+
+  // tests the Piezo buzzer
+  OK2Move = 0; // expected for the buzzer to be set high
+
+  repeat (3) begin
+  @(posedge clk); 
+  end
+
+  OK2Move = 1; // expected for the buzzer to be set low
+
 
 end
 
