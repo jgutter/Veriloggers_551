@@ -28,6 +28,11 @@ always @ (posedge clk, negedge rst_n) begin 	//shift flop
 			shift_reg <= cmd; 	//load cmd into shift register
 			index_cntr <= 5'h10;	 //load index counter register
 		end
+		if (SCLK && SCLK_flip) begin
+			shift_reg <= {shift_reg[14:0], MISO};	//Sampling of MISO; ie shift in MISO into LSB
+			if(|index_cntr != 0)	
+				index_cntr <= index_cntr - 1'b1; //decrement index counter on SCLK posedge
+		end
 	end
 end
 
@@ -69,6 +74,7 @@ always @ (posedge clk, negedge rst_n) begin //back porch delay flop; used to wai
 
 end
 
+/*
 always  @(posedge clk, negedge rst_n) begin //index counter; indicates when transmission is complete
 	if (!rst_n)
 		index_cntr <= 5'h0;
@@ -79,12 +85,14 @@ always  @(posedge clk, negedge rst_n) begin //index counter; indicates when tran
 		end
 	end
 end
-
+*/
+/*
 always @ (posedge clk, negedge rst_n) begin		//Sampling of MISO; ie shift in MISO into LSB
 	if (SCLK && SCLK_flip) begin
 		shift_reg <= {shift_reg[14:0], MISO};
 	end
 end
+*/
 
 always @ (posedge clk, negedge rst_n) begin	//Sample MOSI on posedge SCLK for Slave
 	if(!rst_n)
