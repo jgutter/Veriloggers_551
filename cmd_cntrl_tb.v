@@ -1,38 +1,78 @@
-cmd_cntrl_tb();
+module cmd_cntrl_tb();
 
 //Registers
-reg cmd_rdy, OK2Move, ID_vld clk, rst_n;
+reg cmd_rdy, OK2Move, ID_vld, clk, rst_n;
 reg [7:0] cmd, ID;
 wire clr_cmd_rdy, in_transit, go, buzz, buzz_n, clr_ID_vld; 
 
 //Instantiate the DUT
-cmd_cntrl iDUT();
-
+cmd_cntrl iDUT(.cmd(cmd), .cmd_rdy(cmd_rdy), .OK2Move(OK2Move), .ID(ID), .ID_vld(ID_vld), .clk(clk), .rst_n(rst_n), 
+	.clr_cmd_rdy(clr_cmd_rdy), .clr_ID_vld(clr_ID_vld), .in_transit(in_transit), .go(go), .buzz(buzz), .buzz_n(buzz_n));
 
 //Instantiate the global clock
 always begin
   #5 clk = ~clk;
 end
 
-//Controll the inputs
+//Control the inputs
 initial begin
+
+  cmd_rdy = 0; 
+  OK2Move = 0; 
+  ID_vld = 0;
   clk = 0;
   rst_n = 0;
-  cmd = 8'b10010111;
-  ID = 8'b01101101;
-  #10 rst_n = 1;
-  #20000
-  cmd = 8'b11110011;
+  cmd = 8'b11010111; // expected to remain in the STOP state 
+  ID = 8'b00101101; 
+
+  @(negedge clk) rst_n = 1; // asynchronous reset, values expected to be zero
+
+  repeat (3) begin
+  @(posedge clk);
+  end
+
+  cmd_rdy = 1; // expected to remain in the STOP state 
+  repeat (3) begin
+  @(posedge clk); 
+  end
+
+  @(negedge clk)
+  cmd = 8'b01110011; // expected to go to the GO state 
   ID = 8'b01001001;
-  #20000
-  cmd = 8'b11111111;
-  ID = 8'b11001011;
-  #20000
-  cmd = 8'b00000011;
-  ID = 8'b00001011;
-  #20000
-  cmd = 8'b00011111;
+  
+  repeat (3) begin
+  @(negedge clk); // expected to remain in the GO state 
+  end
+  
+  cmd_rdy = 0;
+  ID_vld = 1;
+  repeat (3) begin
+  @(posedge clk); 
+  end
+  
+  cmd_rdy = 1;
+  cmd = 8'b01001001; // expected to go to the STOP state
+  ID = 8'b00001001;
+  @ (posedge clk);
+  @ (negedge clk);
+  
+  cmd_rdy = 0;
+  repeat (3) begin
+  @(posedge clk); 
+  end
+
+  cmd_rdy = 1;
+  cmd = 8'b01011111; // expected to go to the GO state 
   ID = 8'b11101111;
+  repeat (3) begin
+  @(posedge clk); 
+  end
+
+  cmd = 8'b00011111; // expected to go to the STOP state 
+  repeat (3) begin
+  @(posedge clk); 
+  end
+
 end
 
 endmodule
