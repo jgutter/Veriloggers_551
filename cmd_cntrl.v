@@ -16,6 +16,9 @@ output reg in_transit; // set when state is changed from GO to STOP
 output go; // controls motion controller to move forward
 output buzz; //signal used when an obstacle is found
 output buzz_n; // inverse of the above signal, //
+wire PWM_sig;
+
+pwm14 PWM14(.PWM_sig(PWM_sig), .duty(14'h249f),.clk(clk),.rst_n(rst_n));
 
 // reg
 reg [5:0]dest_ID; 
@@ -66,6 +69,7 @@ always @ (posedge clk, negedge rst_n) begin
 end
 
 // flip flop for clr_cmd_rdy
+/*
 always @ (posedge clk, negedge rst_n) begin
 	if (!rst_n)
 		clr_cmd_rdy <= 1'b0;
@@ -74,16 +78,16 @@ always @ (posedge clk, negedge rst_n) begin
 			clr_cmd_rdy <= 1'b1;
 	end
 end
-
+*/
 
 
 
 
 // Piezo Buzzer divider
 assign go = in_transit && OK2Move;
-assign en = ~OK2Move && in_transit;
-assign buzz = en;
-assign buzz_n = (en)? ~buzz : buzz; 
+assign en = (~OK2Move) && in_transit;
+assign buzz = en ? PWM_sig : 1'b0;
+assign buzz_n = ~buzz; 
 
 always @ (*) begin
 
