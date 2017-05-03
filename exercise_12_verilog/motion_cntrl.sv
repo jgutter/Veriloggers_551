@@ -1,3 +1,4 @@
+
 module motion_cntrl(clk, rst_n, go, strt_cnv, chnnl, cnv_cmplt, A2D_res, IR_in_en, IR_mid_en, IR_out_en,
 			LEDs, lft, rht);
 
@@ -19,7 +20,7 @@ logic dst2Accum, dst2Err, dst2Int, dst2Icmp, dst2Pcmp, dst2lft, dst2rht;
 
 //instantiate alu
 alu ALU(.dst(dst), .Accum(Accum), .Pcomp(pcomp), .Icomp(icomp), .Pterm(pterm),
-		.Iterm(iterm), .Fwd(fwd), .A2D_res(a2d_res), .Error(error), .Intgrl(intgrl), 
+		.Iterm(iterm), .Fwd(fwd), .A2D_res(A2D_res), .Error(error), .Intgrl(intgrl), 
 		.src0sel(src0sel), .src1sel(src1sel), .multiply(multiply), .sub(sub), .mult2(mult2),
 		 .mult4(mult4), .saturate(saturate));
 
@@ -27,12 +28,10 @@ wire PWM_sig;
 //instantiate PWM for reading IR sensors
 pwm8 PWM(.PWM_sig(PWM_sig), .duty(8'h8C), .clk(clk), .rst_n(rst_n));
 //State enumeration
-typedef enum reg [3:0] {STOP, WAIT_IR, WAIT_A2D_R, RIGHT, WAIT2, WAIT_A2D_L, LEFT, PI_CALC} state_t;
+typedef enum reg [3:0] {STOP, WAIT_IR, WAIT_A2D_R, WAIT_SCLK_R, RIGHT, WAIT2, WAIT_A2D_L, WAIT_SCLK_L, LEFT, PI_CALC} state_t;
 state_t state, next_state;
 
 //internal control signals
-logic [11:0] a2d_chnnl1, a2d_chnnl0, a2d_chnnl4, a2d_chnnl2, a2d_chnnl3, a2d_chnnl7;
-logic load_chnnl1, load_chnnl0, load_chnnl4, load_chnnl2, load_chnnl3, load_chnnl7;
 logic [2:0] chnnl_cnt, PI_calc;
 logic [12:0] IR_timer, timer; 
 logic load_4096, load_32, load_alu, incre_chnnl_cnt, clr_chnnl_cnt, clr_Accum, clr_PI_calc, incr_PI_calc, incr_int_dec;
@@ -239,64 +238,6 @@ always_ff @ (posedge clk, negedge rst_n) begin //chnnl flop for A2D converter
 		endcase
 	end
 end
-
-always_ff @ (posedge clk, negedge rst_n) begin //a2d_chnnl1 (in_rht)
-	if(!rst_n)
-		a2d_chnnl1 <= 12'h000;
-	else begin
-		if (load_chnnl1)
-			a2d_chnnl1 <= A2D_res;
-	end
-end
-
-always_ff @ (posedge clk, negedge rst_n) begin //a2d_chnnl0 (in_lft)
-	if(!rst_n)
-		a2d_chnnl0 <= 12'h000;
-	else begin
-		if (load_chnnl0)
-			a2d_chnnl0 <= A2D_res;
-	end
-end
-
-always_ff @ (posedge clk, negedge rst_n) begin //a2d_chnnl4 (mid_rht)
-	if(!rst_n)
-		a2d_chnnl4 <= 12'h000;
-	else begin
-		if (load_chnnl4)
-			a2d_chnnl4 <= A2D_res;
-	end
-end
-
-always_ff @ (posedge clk, negedge rst_n) begin //a2d_chhnl2 (mid_lft)
-	if(!rst_n)
-		a2d_chnnl2 <= 12'h000;
-	else begin
-		if (load_chnnl2)
-			a2d_chnnl2 <= A2D_res;
-	end
-end
-
-always_ff @ (posedge clk, negedge rst_n) begin //a2d_chnnl3 (out_rht)
-	if(!rst_n)
-		a2d_chnnl3 <= 12'h000;
-	else begin
-		if (load_chnnl3)
-			a2d_chnnl3 <= A2D_res;
-	end
-end
-
-always_ff @ (posedge clk, negedge rst_n) begin //a2d_chnnl7 (out_lft)
-	if(!rst_n)
-		a2d_chnnl7 <= 12'h000;
-	else begin
-		if (load_chnnl7)
-			a2d_chnnl7 <= A2D_res;
-	end
-end
-
-
-
-
 /*
 always_ff @ (posedge clk, negedge rst_n) begin
 	if(!rst_n)
@@ -334,8 +275,6 @@ always_comb begin
 	saturate = 1'b0;
 	load_alu = 1'b0;
 	incr_int_dec = 1'b0;
-	load_chnnl1 = 1'b0; load_chnnl0 = 1'b0; load_chnnl4 = 1'b0;
-	load_chnnl2 = 1'b0; load_chnnl3 = 1'b0; load_chnnl7 = 1'b0;
 	dst2Accum = 1'b0; dst2Err = 1'b0; dst2Int = 1'b0; dst2Icmp = 1'b0; dst2Pcmp = 1'b0; 
 	dst2lft = 1'b0; dst2rht = 1'b0;
 	next_state = STOP;
@@ -364,31 +303,31 @@ always_comb begin
 				endcase
 			end
 		WAIT_A2D_R:
-			if (cnv_cmplt) begin	//if conversion is complete
-				next_state = RIGHT;
-				case (chnnl_cnt)
-					3'h0:
-						load_chnnl7 = 1'b1; //load A2D result compensating for staggered operation of SPI
-					3'h2:
-						load_chnnl0 = 1'b1;
-					3'h4:
-						load_chnnl2 = 1'b1;
-				endcase	
+			if (cnv_cmplt) begin	//if conversion is complete (send desired channel to slave)
+				next_state = WAIT_SCLK_R; //or RIGHT?
+				load_32 =  1'b1;
 			end
 			else
 				next_state = WAIT_A2D_R;
+
+		WAIT_SCLK_R:
+			if (|timer == 13'h0000) begin
+				strt_cnv = 1'b1;
+				next_state = RIGHT;
+			end
+			else
+				next_state = WAIT_SCLK_R;
 		RIGHT:
-			if (|timer == 13'h0000) begin	//if ALU calculation has timed out
+			if (cnv_cmplt) begin	//if ALU calculation has timed out
 				incre_chnnl_cnt = 1'b1;	//increment channel counter
-				sub = 1'b1;
 				dst2Accum = 1'b1;	//store dst into Accum
 				load_32 = 1'b1;		//load timer
 				next_state = WAIT2;
 				case (chnnl_cnt)
-					3'h0:
-						mult4 = 1'b1; //multiply result by 4
-					3'h4:
+					3'h2:
 						mult2 = 1'b1; //multiply result by 2
+					3'h4:
+						mult4 = 1'b1; //multiply result by 4
 				endcase
 			end
 			else
@@ -402,22 +341,27 @@ always_comb begin
 				next_state = WAIT2;
 		WAIT_A2D_L:
 			if (cnv_cmplt) begin	//if conversion is complete
-				next_state = LEFT;
-				case (chnnl_cnt)
-					3'h1:
-						load_chnnl1 = 1'b1;
-					3'h3:
-						load_chnnl4 = 1'b1;
-					3'h5:
-						load_chnnl3 = 1'b1;
-				endcase
+				next_state = WAIT_SCLK_L;
+				load_32 = 1'b1; 
 			end
 			else 
 				next_state = WAIT_A2D_L;
+
+		WAIT_SCLK_L:
+			if (|timer == 13'h0000) begin
+				next_state = LEFT;
+				strt_cnv = 1'b1; //send second conversion to receive desired channel
+			end
+			else
+				next_state = WAIT_SCLK_L;
 		LEFT:
-			if (|timer == 13'h0000) begin	//if alu timer has timed out
-				dst2Accum = 1'b1;
+			if (cnv_cmplt) begin	//if alu timer has timed out
+				if (chnnl_cnt == 5)
+					dst2Err = 1'b1;
+				else
+					dst2Accum = 1'b1;
 				incre_chnnl_cnt = 1'b1;	//increment channel counter
+				sub = 1'b1;
 				case (chnnl_cnt)
 					3'h3:
 						mult2 = 1'b1;
@@ -466,16 +410,14 @@ always_comb begin
 						dst2Accum = 1'b1;
 						sub = 1'b1;
 						next_state = PI_CALC;
-						if (|timer == 13'h0000)
-							incr_PI_calc = 1'b1;
+						incr_PI_calc = 1'b1;
 						end
 					3'h4:	begin		//rht_reg = saturate(Accum - Icomp)
 						dst2rht = 1'b1;
 						saturate = 1'b1;
 						sub = 1'b1;
 						next_state = PI_CALC;
-						if (|timer == 13'h0000)
-							incr_PI_calc = 1'b1;
+						incr_PI_calc = 1'b1;
 						end
 					3'h5:	begin		//Accum = Fwd + Pcomp
 						dst2Accum = 1'b1;
@@ -503,12 +445,5 @@ assign IR_mid_en = IR_mid ? PWM_sig : 1'b0;
 assign IR_out_en = IR_out ? PWM_sig : 1'b0;
 assign lft =  lft_reg[11:1];
 assign rht =  rht_reg[11:1];
-assign a2d_res = (chnnl_cnt == 3'h0) ? a2d_chnnl7 :
-		(chnnl_cnt == 3'h1) ? a2d_chnnl1 :
-		(chnnl_cnt == 3'h2) ? a2d_chnnl0 :
-		(chnnl_cnt == 3'h3) ? a2d_chnnl4 :
-		(chnnl_cnt == 3'h4) ? a2d_chnnl2 :
-		(chnnl_cnt == 3'h5) ? a2d_chnnl3 :
-		12'h000;
 
 endmodule
