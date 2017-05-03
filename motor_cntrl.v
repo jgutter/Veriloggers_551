@@ -24,16 +24,16 @@ p_w_m pwmr(pwm_r, mag_r, clk, rst_n);
 
 always@(*) begin
 
-assign pre_fl = (sign_l == 1'b1) ? pwm_l:
+pre_fl = (sign_l == 1'b1) ? pwm_l:
                  1'b0;
 
-assign pre_fr = (sign_r == 1'b1) ? pwm_r:
+pre_fr = (sign_r == 1'b1) ? pwm_r:
                  1'b0;
 
-assign pre_rl = (sign_l == 1'b0) ? pwm_l:
+pre_rl = (sign_l == 1'b0) ? pwm_l:
                  1'b0;
 
-assign pre_rr = (sign_r == 1'b0) ? pwm_r:
+pre_rr = (sign_r == 1'b0) ? pwm_r:
                  1'b0;
 
 
