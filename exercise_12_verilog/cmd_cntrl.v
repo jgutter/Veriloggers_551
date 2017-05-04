@@ -18,7 +18,7 @@ output buzz; //signal used when an obstacle is found
 output buzz_n; // inverse of the above signal, //
 wire PWM_sig;
 wire en;
-pwm PWM(.PWM_sig(PWM_sig), .duty(10'h1ff),.clk(clk),.rst_n(rst_n));
+p_w_m PWM(.PWM_sig(PWM_sig), .duty(10'h1ff),.clk(clk),.rst_n(rst_n));
 // reg
 reg [5:0]dest_ID; 
 reg ld_dest_ID; 

@@ -6,7 +6,7 @@ input [15:0] cmd;	//input cmd loaded
 output reg done, MOSI, SS_n; //slave select is active low
 output logic [15:0] rd_data;	//ready data; only valid when done is asserted
 output reg SCLK;	//Serial clock
-logic SCLK_flip;
+logic SCLK_flip;	//flop to determine when SCLK has toggled
 
 typedef enum reg [1:0] {IDLE, WAIT1, TRANSMIT, WAIT2} state_t; //state machine state enumeration
 
@@ -51,7 +51,7 @@ always @ (posedge clk, negedge rst_n) begin 	//SCLK and SCLK counter
 			else begin			//if counter has expired
 				SCLK_counter <= 5'h10; 	//reset timer
 				SCLK <= ~SCLK;		//flip SCLK signal
-				SCLK_flip <= 1'b1;			
+				SCLK_flip <= 1'b1;	//signal that SCLK has flipped	
 			end
 		end
 		else
@@ -99,7 +99,7 @@ always @ (posedge clk, negedge rst_n) begin	//Sample MOSI on posedge SCLK for Sl
 		MOSI <= 1'b0;			//asynch reset: to get MOSI in a known value on reset
 	else begin
 		if (!SCLK && SCLK_flip) begin
-			MOSI <= shift_reg[15];		//sample MSB of shift register into MOSI
+			MOSI <= shift_reg[15];		//sample MSB of shift register into MOSI (falling edge)
 		end
 	end
 end
