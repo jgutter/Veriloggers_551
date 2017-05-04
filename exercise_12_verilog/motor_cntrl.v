@@ -14,8 +14,8 @@ wire pwm_l, pwm_r;  //PWM signals comming from left and right signals.
 //DUT for pwm generator
 //Instantiates 2 DUTs , one for left and one for right signals.
 // module p_w_m(PWM_sig, duty, clk, rst_n);
-pwm pwml(pwm_l, mag_l, clk, rst_n);
-pwm pwmr(pwm_r, mag_r, clk, rst_n);
+p_w_m pwml(pwm_l, mag_l, clk, rst_n);
+p_w_m pwmr(pwm_r, mag_r, clk, rst_n);
 
 
 
@@ -30,9 +30,11 @@ assign pre_fr = (sign_r == 1'b1) ? pwm_r:
                  1'b0;
 
 assign pre_rl = (sign_l == 1'b0) ? pwm_l://Check sign then assign pwm if negative or zero elsewise.
-                 1'b0;
+                (lft==10'b0000000000) ? 1'b1:
+		1'b0;
 
 assign pre_rr = (sign_r == 1'b0) ? pwm_r:
+		(rht==10'b0000000000) ? 1'b1:
                  1'b0;
 
 
