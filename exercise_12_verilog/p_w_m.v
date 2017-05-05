@@ -26,9 +26,13 @@ else if (cnt == 10'b0000000000) begin
  set <= 1'b1;
  reset <=1'b0;
 end
+else if (duty == 10'b1111111111) begin
+ set <= 1'b1;
+ reset <=1'b0;
+end
 else if (cnt==duty) begin 
  set <= 1'b0;
- reset = 1'b1;
+ reset <= 1'b1;
 end
 
 end
