@@ -1,0 +1,38 @@
+############################
+#Read in the Follower files#
+############################
+read_file -format sverilog {A2D_intf.sv, alu.sv, barcode.sv,  dig_core.sv,  motion_cntrl.sv, SPI_mstr.sv, UART_rcv.sv, UART_tx.sv}
+read_file -format verilog {cmd_cntrl.v,follower.v,motor_cntrl.v,p_w_m.v, pwm.v, pwm8.v,pwm14.v}
+###########################################
+# Define clock and set don't mess with it #
+###########################################
+
+create_clock -name "clk" -period 25 -waveform { 0 10 } { clk }
+set_dont_touch_network [find port clk]
+set_clock_uncertainty 
+
+#######################################
+# Set current design to the to level  #
+#######################################
+set current_design Follower
+
+
+set_drive 10 [all_inputs]
+
+set_max_transition 0.15 [current_design]
+
+set_load 0.1 [all_outputs]
+
+set_wire_load_model -name TSMC32K_Lowk_Conservative
+
+set_max_delay 2.15 -to [all_outputs]
+
+########################
+# Compile the design   #
+########################
+compile -map_effort medium
+
+########################################
+# Write resulting synthesized netlist  #
+########################################
+write -format verilog alu -output alu.vg
