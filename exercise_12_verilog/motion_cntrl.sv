@@ -138,7 +138,7 @@ always_ff @ (posedge clk, negedge rst_n) begin //lft_reg flop
 		if(!go)
 			lft_reg <= 12'h000;
 		if (dst2lft)
-			lft_reg <= dst;
+			lft_reg <= dst[11:0];
 	end
 end
 
@@ -149,7 +149,7 @@ always_ff @ (posedge clk, negedge rst_n) begin //rht_reg flop
 		if(!go)
 			rht_reg <= 12'h000;
 		else if (dst2rht)
-			rht_reg <= dst;
+			rht_reg <= dst[11:0];
 	end
 end
 
