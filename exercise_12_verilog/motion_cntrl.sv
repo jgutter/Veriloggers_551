@@ -159,32 +159,32 @@ always_comb begin		//src selects
 	if (state == PI_CALC) begin
 		case (PI_calc)
 			3'h0: begin
-				src1sel <= 3'b011; 	//ErrDiv22Src1
-				src0sel <= 3'b001;	//Intgrl2Src0
+				src1sel = 3'b011; 	//ErrDiv22Src1
+				src0sel = 3'b001;	//Intgrl2Src0
 			end
 			3'h1: begin
-				src1sel <= 3'b001;	//Iterm2Src1
-				src0sel <= 3'b001;	//Intgrl2Src0
+				src1sel = 3'b001;	//Iterm2Src1
+				src0sel = 3'b001;	//Intgrl2Src0
 			end
 			3'h2: begin
-				src1sel <= 3'b010;	//Err2Src1
-				src0sel <= 3'b100;	//Pterm2Src0
+				src1sel = 3'b010;	//Err2Src1
+				src0sel = 3'b100;	//Pterm2Src0
 			end
 			3'h3: begin
-				src1sel <= 3'b100;	//Fwd2Src1
-				src0sel <= 3'b011;	//Pcomp2Src0
+				src1sel = 3'b100;	//Fwd2Src1
+				src0sel = 3'b011;	//Pcomp2Src0
 			end
 			3'h4: begin
-				src1sel <= 3'b000;	//Accum2Src1
-				src0sel <= 3'b010;	//Icomp2Src0
+				src1sel = 3'b000;	//Accum2Src1
+				src0sel = 3'b010;	//Icomp2Src0
 			end
 			3'h5: begin
-				src1sel <= 3'b100;	//Fwd2Src1
-				src0sel <= 3'b011;	//Pcomp2Src0
+				src1sel = 3'b100;	//Fwd2Src1
+				src0sel = 3'b011;	//Pcomp2Src0
 			end
 			3'h6: begin
-				src1sel <= 3'b000;	//Accum2Src1
-				src0sel <= 3'b010;	//Icomp2Src0
+				src1sel = 3'b000;	//Accum2Src1
+				src0sel = 3'b010;	//Icomp2Src0
 			end
 		endcase
 	end
