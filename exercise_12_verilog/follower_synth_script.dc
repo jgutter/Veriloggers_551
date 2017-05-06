@@ -41,4 +41,4 @@ compile -map_effort medium
 ########################################
 # Write resulting synthesized netlist  #
 ########################################
-write -format verilog alu -output follower.vg
+write -format verilog alu -output alu.vg
