@@ -28,7 +28,7 @@ wire PWM_sig;
 //instantiate PWM for reading IR sensors
 pwm8 PWM(.PWM_sig(PWM_sig), .duty(8'h8C), .clk(clk), .rst_n(rst_n));
 //State enumeration
-typedef enum reg [3:0] {STOP, WAIT_IR, WAIT_A2D_R, WAIT_SCLK_R, RIGHT, WAIT2, WAIT_A2D_L, WAIT_SCLK_L, LEFT, PI_CALC} state_t;
+typedef enum reg [3:0] {STOP, WAIT_IR, A2D_ready_R, RIGHT, WAIT2, A2D_ready_L, LEFT, PI_CALC} state_t;
 state_t state, next_state;
 
 //internal control signals
@@ -138,7 +138,7 @@ always_ff @ (posedge clk, negedge rst_n) begin //lft_reg flop
 		if(!go)
 			lft_reg <= 12'h000;
 		if (dst2lft)
-			lft_reg <= dst[11:0];
+			lft_reg <= dst;
 	end
 end
 
@@ -149,7 +149,7 @@ always_ff @ (posedge clk, negedge rst_n) begin //rht_reg flop
 		if(!go)
 			rht_reg <= 12'h000;
 		else if (dst2rht)
-			rht_reg <= dst[11:0];
+			rht_reg <= dst;
 	end
 end
 
@@ -287,11 +287,11 @@ always_comb begin
 				next_state = WAIT_IR;
 			end
 		WAIT_IR:
-			if (|IR_timer == 13'h0000) begin	//if PWM timer times out
+			if (~|IR_timer) begin	//if PWM timer times out
 				strt_cnv = 1'b1;	//start A2D conversion
-				next_state = WAIT_A2D_R;
+				next_state = A2D_ready_R;
 			end
-			else if (|IR_timer != 13'h0000) begin //if PWM timer has not timed out
+			else begin //if PWM timer has not timed out
 				next_state = WAIT_IR;
 				case (chnnl_cnt)
 					3'h0:			//if channel count == 0
@@ -302,23 +302,15 @@ always_comb begin
 						IR_out = 1'b1;	//enable PWM for outer IR sensors
 				endcase
 			end
-		WAIT_A2D_R:
-			if (cnv_cmplt) begin	//if conversion is complete (send desired channel to slave)
-				next_state = WAIT_SCLK_R; //or RIGHT?
-				load_32 =  1'b1;
-			end
-			else
-				next_state = WAIT_A2D_R;
-
-		WAIT_SCLK_R:
-			if (|timer == 13'h0000) begin
-				strt_cnv = 1'b1;
+		A2D_ready_R:
+			if (cnv_cmplt) begin
+				load_alu = 1'b1;
 				next_state = RIGHT;
 			end
 			else
-				next_state = WAIT_SCLK_R;
+				next_state = A2D_ready_R;
 		RIGHT:
-			if (cnv_cmplt) begin	//if ALU calculation has timed out
+			if (~|timer) begin	//if ALU calculation has timed out
 				incre_chnnl_cnt = 1'b1;	//increment channel counter
 				dst2Accum = 1'b1;	//store dst into Accum
 				load_32 = 1'b1;		//load timer
@@ -333,29 +325,21 @@ always_comb begin
 			else
 				next_state = RIGHT;
 		WAIT2:
-			if (|timer == 13'h0000) begin 	//if timer has timed out
+			if (~|timer) begin 	//if timer has timed out
 				strt_cnv = 1'b1;	//start A2D conversion
-				next_state = WAIT_A2D_L;
+				next_state = A2D_ready_L;
 			end
 			else
 				next_state = WAIT2;
-		WAIT_A2D_L:
-			if (cnv_cmplt) begin	//if conversion is complete
-				next_state = WAIT_SCLK_L;
-				load_32 = 1'b1; 
-			end
-			else 
-				next_state = WAIT_A2D_L;
-
-		WAIT_SCLK_L:
-			if (|timer == 13'h0000) begin
+		A2D_ready_L:
+			if (cnv_cmplt) begin
+				load_alu = 1'b1;
 				next_state = LEFT;
-				strt_cnv = 1'b1; //send second conversion to receive desired channel
 			end
 			else
-				next_state = WAIT_SCLK_L;
+				next_state = A2D_ready_L;
 		LEFT:
-			if (cnv_cmplt) begin	//if alu timer has timed out
+			if (~|timer) begin	//if alu timer has timed out
 				if (chnnl_cnt == 5)
 					dst2Err = 1'b1;
 				else
@@ -393,7 +377,7 @@ always_comb begin
 						dst2Icmp = 1'b1;
 						multiply = 1'b1;	//setup for next calculation
 						next_state = PI_CALC;
-						if (|timer == 13'h0000) begin
+						if (~|timer) begin
 							incr_PI_calc = 1'b1;
 							load_alu = 1'b1;
 							end
@@ -402,7 +386,7 @@ always_comb begin
 						dst2Pcmp = 1'b1;
 						multiply = 1'b1;
 						next_state = PI_CALC;
-						if (|timer == 13'h0000) begin
+						if (~|timer) begin
 							incr_PI_calc = 1'b1;
 						end
 						end
