@@ -21,7 +21,7 @@ set_input_delay -clock clk 0.5 $prim_inputs
 set_output_delay -clock clk 0.5 [all_outputs]
 
 #TODO: figure out command to set drive strength "equivalent to a ND2D2BW gate from our library"
-#set_driving_cell -lib_cell ND2D2BWP -from
+#set_driving_cell -lib_cell ND2D2BWP -from –library\tcbn40lpbwptc $prim_inputs
 
 set_drive 10 [all_inputs]
 
