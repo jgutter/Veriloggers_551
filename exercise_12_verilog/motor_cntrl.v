@@ -24,17 +24,19 @@ p_w_m pwmr(pwm_r, mag_r, clk, rst_n);
 //Input logic to fwd_*, rev_*
 
 assign pre_fl = (sign_l == 1'b1) ? pwm_l: //Check sign then assign pwm if its positive or zero otherwise.
+		(~|lft) ? 1'b1:
                  1'b0;
 
 assign pre_fr = (sign_r == 1'b1) ? pwm_r:
+		(~|rht) ? 1'b1:
                  1'b0;
 
 assign pre_rl = (sign_l == 1'b0) ? pwm_l://Check sign then assign pwm if negative or zero elsewise.
-                (lft==10'b0000000000) ? 1'b1:
+                (~|lft) ? 1'b1:
 		1'b0;
 
 assign pre_rr = (sign_r == 1'b0) ? pwm_r:
-		(rht==10'b0000000000) ? 1'b1:
+		(~|rht) ? 1'b1:
                  1'b0;
 
 
