@@ -1,0 +1,45 @@
+############################
+#Read in the Follower files#
+############################
+read_file -format verilog {p_w_m.v, pwm.v, pwm8.v, pwm14.v, motor_cntrl.v, cmd_cntrl.v}
+read_file -format sverilog {A2D_intf.sv, alu.sv, barcode.sv,  dig_core.sv,  motion_cntrl.sv, SPI_mstr.sv, UART_rcv.sv, UART_tx.sv}
+read_file -format verilog {follower.v}
+###########################################
+# Define clock and set don't mess with it #
+###########################################
+set current_design Follower
+
+create_clock -name "clk" -period 2.5 -waveform { 0 1 } { clk }
+set_dont_touch_network [find port clk]
+set_clock_uncertainty 0.10 clk
+set prim_inputs [remove_from_collection [all_inputs] [find port clk]]
+#######################################
+# Set current design to the to level  #
+#######################################
+set_input_delay -clock clk 0.5 $prim_inputs
+
+set_output_delay -clock clk 0.5 [all_outputs]
+
+#TODO: figure out command to set drive strength "equivalent to a ND2D2BW gate from our library"
+#set_driving_cell -lib_cell ND2D2BWP -from
+
+set_drive 10 [all_inputs]
+
+set_max_transition 0.15 [current_design]
+
+set_load 0.1 [all_outputs]
+
+set_wire_load_model -name TSMC32K_Lowk_Conservative
+
+#set_max_delay 2.5 -to [all_outputs]
+
+########################
+# Compile the design   #
+########################
+#ungroup -all_instances
+compile -map_effort medium
+
+########################################
+# Write resulting synthesized netlist  #
+########################################
+write -format verilog alu -output alu.vg
